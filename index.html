@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science with Mr Guevara - Revision Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@300;400;600&display=swap');
+
+        /* CGA BRAND COLORS */
+        :root {
+            --cga-red: #990000;
+            --cga-dark-red: #7a0000;
+            --cga-gold: #FFC107;
+            --cga-gray: #333333;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+            color: #1F2937;
+        }
+
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        /* Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+        .interactive-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+        .interactive-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Navigation Tabs */
+        .nav-btn {
+            color: #E5E7EB; /* Light gray text */
+            position: relative;
+        }
+        .nav-btn:hover {
+            color: var(--cga-gold);
+        }
+        .tab-btn-active {
+            color: #FFFFFF !important;
+            font-weight: 700;
+        }
+        .tab-btn-active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px; /* Adjust based on padding */
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--cga-gold);
+            border-radius: 2px 2px 0 0;
+        }
+
+        /* Flashcard Styles */
+        .flashcard {
+            perspective: 1000px;
+            height: 180px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 0.75rem;
+            cursor: pointer;
+        }
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-radius: 0.75rem;
+        }
+        .flashcard-front {
+            background-color: #ffffff;
+            color: #1F2937;
+            border: 2px solid #E5E7EB;
+        }
+        .flashcard-back {
+            background-color: var(--cga-red); /* Branding Red */
+            color: white;
+            transform: rotateY(180deg);
+            border: 2px solid var(--cga-red);
+        }
+
+        /* CGA Specific Utilities */
+        .bg-cga-red { background-color: var(--cga-red); }
+        .text-cga-red { color: var(--cga-red); }
+        .text-cga-gold { color: var(--cga-gold); }
+        .border-cga-gold { border-color: var(--cga-gold); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="bg-cga-red shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row justify-between h-auto sm:h-20 items-center py-3 sm:py-0">
+                <div class="flex items-center mb-3 sm:mb-0">
+                    <!-- Logo Style Text -->
+                    <div class="flex flex-col leading-tight">
+                         <span class="text-2xl font-extrabold text-white tracking-wide brand-font">SCIENCE WITH</span>
+                         <span class="text-xs font-bold text-cga-gold tracking-widest uppercase">MR GUEVARA</span>
+                    </div>
+                    <div class="h-8 w-px bg-white/20 mx-4 hidden sm:block"></div>
+                    <span class="text-white/90 font-medium text-sm hidden sm:block">Science Revision Hub</span>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6">
+                    <button onclick="switchTab('bio')" id="btn-bio" class="nav-btn text-sm font-semibold tracking-wide transition pb-2">BIOLOGY</button>
+                    <button onclick="switchTab('chem')" id="btn-chem" class="nav-btn text-sm font-semibold tracking-wide transition pb-2">CHEMISTRY</button>
+                    <button onclick="switchTab('phys')" id="btn-phys" class="nav-btn text-sm font-semibold tracking-wide transition pb-2">PHYSICS</button>
+                    <button onclick="switchTab('flash')" id="btn-flash" class="nav-btn text-sm font-semibold tracking-wide transition pb-2 flex items-center gap-1"><span class="text-cga-gold">⚡</span> QUICK FIRE</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Hero -->
+        <div id="hero-section" class="text-center py-12 fade-in">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 uppercase">
+                Premium <span class="text-cga-red">Online Revision</span><br>For Ambitious Students
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-10">
+                Master your Stage 2 Final Exam with our interactive, high-quality revision tools covering Biology, Chemistry, and Physics.
+            </p>
+            <div class="flex flex-wrap justify-center gap-6">
+                <!-- Buttons using Subject Colors but styled cleaner -->
+                <button onclick="switchTab('bio')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded shadow-lg transition transform hover:-translate-y-1">
+                    🌿 Start Biology
+                </button>
+                <button onclick="switchTab('chem')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded shadow-lg transition transform hover:-translate-y-1">
+                    🧪 Start Chemistry
+                </button>
+                <button onclick="switchTab('phys')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-8 rounded shadow-lg transition transform hover:-translate-y-1">
+                    ⚡ Start Physics
+                </button>
+                <button onclick="switchTab('flash')" class="bg-cga-red hover:bg-red-800 text-white font-bold py-4 px-8 rounded shadow-lg transition transform hover:-translate-y-1 border-2 border-transparent hover:border-cga-gold">
+                    🃏 Flashcards
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= BIOLOGY SECTION ================= -->
+        <div id="bio-section" class="hidden fade-in">
+            <div class="border-l-4 border-green-500 bg-white shadow-sm rounded-r-xl p-6 mb-8">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2 uppercase">🌿 Biology: <span class="text-green-600">The Living World</span></h2>
+                <p class="text-gray-600">Explore Life Processes, Cells, Systems, and Variation.</p>
+            </div>
+
+            <!-- MRS C GREN -->
+            <div class="mb-10">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="bg-cga-red text-white py-1 px-3 rounded text-xs uppercase tracking-wider mr-2 font-bold">Core Concept</span> 
+                    Characteristics of Life (Click cards)
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="mrs-gren-container"></div>
+            </div>
+
+            <!-- Cells -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-green-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🔬 Cell Structures Explorer</h3>
+                    <div class="flex space-x-2 mb-4 bg-gray-100 p-1 rounded-lg">
+                        <button onclick="updateCellView('animal')" id="btn-animal" class="flex-1 py-2 rounded-md font-semibold transition">Animal Cell</button>
+                        <button onclick="updateCellView('plant')" id="btn-plant" class="flex-1 py-2 rounded-md font-semibold transition">Plant Cell</button>
+                    </div>
+                    <div id="cell-details" class="space-y-3 h-72 overflow-y-auto custom-scroll pr-2"></div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-green-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">🌱 Plant Transport</h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-600 hover:bg-green-100 transition cursor-help">
+                            <h4 class="font-bold text-green-800 text-lg">💧 Xylem</h4>
+                            <p class="text-gray-700">Dead, hollow tubes. Transports <strong>Water & Minerals</strong> upwards only.</p>
+                        </div>
+                        <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500 hover:bg-yellow-100 transition cursor-help">
+                            <h4 class="font-bold text-yellow-800 text-lg">🍬 Phloem</h4>
+                            <p class="text-gray-700">Living tissue. Transports <strong>Food (Sugars)</strong> up and down.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organ Systems -->
+            <div class="bg-white rounded-xl shadow p-6 mb-10 border-t-4 border-green-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">🫀 Interactive Organ Systems</h3>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <!-- Selector -->
+                    <div class="md:col-span-4 space-y-2">
+                        <button onclick="updateSystemDetail('respiratory')" class="w-full text-left p-4 rounded-lg hover:bg-gray-100 font-bold transition border-l-4 border-transparent hover:border-cga-red focus:outline-none system-btn" id="sys-btn-resp">🫁 Respiratory</button>
+                        <button onclick="updateSystemDetail('circulatory')" class="w-full text-left p-4 rounded-lg hover:bg-gray-100 font-bold transition border-l-4 border-transparent hover:border-cga-red focus:outline-none system-btn" id="sys-btn-circ">❤️ Circulatory</button>
+                        <button onclick="updateSystemDetail('skeletal')" class="w-full text-left p-4 rounded-lg hover:bg-gray-100 font-bold transition border-l-4 border-transparent hover:border-cga-red focus:outline-none system-btn" id="sys-btn-skel">💀 Skeletal & Muscle</button>
+                        <button onclick="updateSystemDetail('repro')" class="w-full text-left p-4 rounded-lg hover:bg-gray-100 font-bold transition border-l-4 border-transparent hover:border-cga-red focus:outline-none system-btn" id="sys-btn-repro">🧬 Reproduction</button>
+                    </div>
+
+                    <!-- Detail Panel -->
+                    <div class="md:col-span-8 bg-gray-50 rounded-xl p-6 border border-gray-200 min-h-[300px]" id="system-detail-panel"></div>
+                </div>
+            </div>
+
+            <!-- Genetics -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-green-500">
+                 <h3 class="text-xl font-bold text-gray-800 mb-4">🧬 Genetics & Evolution</h3>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="border border-gray-200 p-4 rounded-xl hover:shadow-md transition">
+                        <strong class="text-lg text-cga-red">Variation</strong>
+                        <ul class="text-sm list-disc list-inside mt-3 text-gray-600 space-y-2">
+                            <li><strong>Inherited:</strong> Eye colour, Genes.</li>
+                            <li><strong>Environmental:</strong> Scars, Tattoos, Accent.</li>
+                        </ul>
+                     </div>
+                     <div class="border border-gray-200 p-4 rounded-xl hover:shadow-md transition">
+                        <strong class="text-lg text-cga-red">Natural Selection</strong>
+                        <p class="text-sm mt-2 text-gray-600 leading-relaxed">"Survival of the fittest". Helpful traits (Adaptations) -> Survival -> Reproduction -> Passing on genes.</p>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- ================= CHEMISTRY SECTION ================= -->
+        <div id="chem-section" class="hidden fade-in">
+            <div class="border-l-4 border-blue-500 bg-white shadow-sm rounded-r-xl p-6 mb-8">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2 uppercase">🧪 Chemistry: <span class="text-blue-600">Matter & Reactions</span></h2>
+                <p class="text-gray-600">Particles, Mixtures, Reactions, Acids, Earth.</p>
+            </div>
+
+            <!-- Elements / Compounds / Mixtures -->
+             <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-blue-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">🧱 Elements, Compounds & Mixtures</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="p-4 bg-gray-50 rounded-xl border hover:border-blue-400 transition">
+                        <div class="text-3xl mb-2">🪙 Element</div>
+                        <p class="text-sm text-gray-600">Pure substance. One type of atom. <br><em>e.g., Gold, Oxygen, Iron.</em></p>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-xl border border-blue-200 hover:shadow-md transition">
+                        <div class="text-3xl mb-2">🔗 Compound</div>
+                        <p class="text-sm text-gray-600">Two or more elements <strong>chemically bonded</strong>.</p>
+                        <div class="mt-3 p-2 bg-white rounded text-xs border border-blue-100">
+                            <strong>Magic Change:</strong><br>
+                            Sodium (Reactive Metal) + Chlorine (Toxic Gas) = <br><strong>Sodium Chloride (Safe Salt 🧂)</strong>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-xl border hover:border-blue-400 transition">
+                        <div class="text-3xl mb-2">🥣 Mixture</div>
+                        <p class="text-sm text-gray-600">Substances together but <strong>not bonded</strong>. Retain properties.<br><em>e.g., Air, Salt Water.</em></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Particle Theory & States -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-blue-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">⚛️ Particle Theory & States</h3>
+                
+                <div class="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                    <h4 class="font-bold text-gray-700 mb-4 uppercase text-sm tracking-wide">Click to Explore Changes of State</h4>
+                    <div class="flex flex-col md:flex-row justify-center items-center gap-8">
+                        <div class="w-32 p-3 bg-white rounded shadow text-center cursor-pointer hover:border-blue-500 border-2 border-transparent transition" onclick="alert('Solid: Particles fixed, vibrate.')">
+                            <div class="text-4xl">🧊</div><strong>Solid</strong>
+                        </div>
+                        <div class="flex flex-col gap-2 text-xs font-bold text-gray-500">
+                            <span class="text-red-500">Melting ➡️</span>
+                            <span class="text-blue-500">⬅️ Freezing</span>
+                            <span class="text-purple-500 block md:hidden">⬆️ Sublimation</span>
+                        </div>
+                        <div class="w-32 p-3 bg-white rounded shadow text-center cursor-pointer hover:border-blue-500 border-2 border-transparent transition" onclick="alert('Liquid: Close, random, flow.')">
+                            <div class="text-4xl">💧</div><strong>Liquid</strong>
+                        </div>
+                         <div class="flex flex-col gap-2 text-xs font-bold text-gray-500">
+                            <span class="text-red-500">Evaporation ➡️</span>
+                            <span class="text-blue-500">⬅️ Condensation</span>
+                        </div>
+                        <div class="w-32 p-3 bg-white rounded shadow text-center cursor-pointer hover:border-blue-500 border-2 border-transparent transition" onclick="alert('Gas: Far apart, fast, compressible.')">
+                            <div class="text-4xl">💨</div><strong>Gas</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Air & pH -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">💨 Composition of Air (%)</h3>
+                    <div class="chart-container">
+                        <canvas id="airChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow p-6 border-t-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">⚖️ Interactive pH Scale</h3>
+                    <input type="range" min="0" max="14" value="7" class="w-full h-4 rounded-lg appearance-none cursor-pointer mb-6 shadow-inner" id="ph-slider" style="background: linear-gradient(to right, #ef4444 0%, #ef4444 45%, #22c55e 50%, #3b82f6 55%, #3b82f6 100%);">
+                    <div class="text-center p-4 bg-gray-50 rounded-xl">
+                        <div class="text-5xl font-bold mb-2 transition-colors duration-300" id="ph-value">pH 7</div>
+                        <div class="text-2xl font-semibold mb-1" id="ph-type" style="color: #22c55e;">Neutral</div>
+                        <p class="text-gray-600 italic" id="ph-example">Example: Pure Water</p>
+                    </div>
+                    <div id="corrosive-warning" class="hidden mt-4 bg-red-100 text-red-800 p-3 rounded-lg border border-red-200 flex items-center justify-center animate-pulse">
+                        <span class="text-2xl mr-2">⚠️</span> 
+                        <span><strong>Warning: Corrosive!</strong> Causes burns.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Earth Resources (Interactive) -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-blue-500">
+                 <h3 class="text-xl font-bold text-gray-800 mb-6">🌍 Energy Resources Explorer</h3>
+                 <p class="text-gray-600 mb-4">Click on a resource type to uncover details!</p>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <!-- Renewable -->
+                     <div class="border-2 border-green-100 rounded-xl p-4 hover:border-green-300 transition cursor-pointer" onclick="toggleResource('renewable')">
+                         <div class="flex items-center mb-2">
+                             <div class="bg-green-100 p-2 rounded-full mr-3 text-2xl">♻️</div>
+                             <h4 class="text-lg font-bold text-green-800">Renewable Energy</h4>
+                         </div>
+                         <p class="text-sm text-gray-600 mb-3">Won't run out. Replenished naturally.</p>
+                         <div id="renewable-details" class="hidden text-sm bg-green-50 p-3 rounded space-y-2">
+                             <p>☀️ <strong>Solar:</strong> Sunlight -> Panels. Clean, day only.</p>
+                             <p>🌬️ <strong>Wind:</strong> Turns turbines. Unreliable (weather).</p>
+                             <p>💧 <strong>Hydroelectric:</strong> Falling water (dams). Reliable, floods land.</p>
+                             <p>🌋 <strong>Geothermal:</strong> Underground heat -> Steam.</p>
+                         </div>
+                         <div class="text-center text-green-500 text-xs mt-2 animate-bounce">Click to Expand</div>
+                     </div>
+
+                     <!-- Non-Renewable -->
+                     <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-gray-400 transition cursor-pointer" onclick="toggleResource('non-renewable')">
+                         <div class="flex items-center mb-2">
+                             <div class="bg-gray-200 p-2 rounded-full mr-3 text-2xl">🛢️</div>
+                             <h4 class="text-lg font-bold text-gray-800">Non-Renewable Energy</h4>
+                         </div>
+                         <p class="text-sm text-gray-600 mb-3">Finite. Will run out eventually.</p>
+                         <div id="non-renewable-details" class="hidden text-sm bg-gray-100 p-3 rounded space-y-2">
+                             <p>⬛ <strong>Fossil Fuels (Coal, Oil, Gas):</strong> Reliable, cheap. <br><span class="text-red-600 font-bold">Problem: Releases CO₂ (Greenhouse Effect).</span></p>
+                             <p>☢️ <strong>Nuclear:</strong> Uranium. High energy, no CO₂. <br><span class="text-orange-600 font-bold">Problem: Dangerous radioactive waste.</span></p>
+                         </div>
+                         <div class="text-center text-gray-400 text-xs mt-2 animate-bounce">Click to Expand</div>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- ================= PHYSICS SECTION ================= -->
+        <div id="phys-section" class="hidden fade-in">
+            <div class="border-l-4 border-yellow-500 bg-white shadow-sm rounded-r-xl p-6 mb-8">
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2 uppercase">⚡ Physics: <span class="text-yellow-600">Forces & Energy</span></h2>
+                <p class="text-gray-600">Forces, Pressure, Electricity & Energy Stores.</p>
+            </div>
+
+            <!-- Forces -->
+             <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-yellow-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">🚀 Forces Fundamentals</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <strong>Definition:</strong> Push or pull. Measured in <strong>Newtons (N)</strong>.
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <strong>Gravity:</strong> Non-contact attractive force. Pulls objects to Earth center. Gives objects Weight.
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                            <strong>Friction:</strong> Opposes motion between touching surfaces.
+                            <ul class="text-sm mt-2 list-disc list-inside text-gray-700">
+                                <li><strong>Effect:</strong> Slows things, creates Heat/Sound.</li>
+                                <li><strong>Use:</strong> Walking grip, Braking.</li>
+                                <li><strong>Nuisance:</strong> Wears machinery (Use Oil to reduce).</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- Weight vs Mass -->
+                     <div class="bg-gray-800 text-white p-6 rounded-xl shadow-inner border border-gray-700">
+                        <h4 class="text-lg font-bold text-yellow-400 mb-4">Weight vs Mass</h4>
+                        <div class="space-y-4 text-sm">
+                            <p><strong>Mass (kg):</strong> Amount of 'stuff'. CONSTANT everywhere.</p>
+                            <p><strong>Weight (N):</strong> Force of gravity. CHANGES by location.</p>
+                            <div class="bg-gray-700 p-3 rounded text-center font-mono text-lg text-yellow-300 border border-yellow-500">
+                                Weight = Mass × Gravity
+                            </div>
+                            <div class="pt-2">
+                                <label class="text-xs uppercase tracking-wide text-gray-400">Test it (Mass kg):</label>
+                                <input type="number" id="mass-input" value="50" oninput="updateWeightChart()" class="w-full mt-1 p-2 rounded text-gray-900 font-bold border-2 border-transparent focus:border-yellow-400 outline-none">
+                            </div>
+                            <div class="h-32 relative">
+                                <canvas id="weightChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pressure -->
+             <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-yellow-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📍 Pressure</h3>
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <div class="flex-1 text-center bg-gray-50 p-4 rounded-xl w-full border border-gray-100">
+                        <div class="text-4xl mb-2">🔪</div>
+                        <h4 class="font-bold">Sharp Knife</h4>
+                        <p class="text-sm text-gray-600">Small Area = <span class="text-red-600 font-bold text-lg">HIGH Pressure</span></p>
+                        <p class="text-xs text-gray-500">Easier to cut</p>
+                    </div>
+                    <div class="font-bold text-2xl text-cga-gold">VS</div>
+                    <div class="flex-1 text-center bg-gray-50 p-4 rounded-xl w-full border border-gray-100">
+                        <div class="text-4xl mb-2">🥄</div>
+                        <h4 class="font-bold">Blunt Spoon</h4>
+                        <p class="text-sm text-gray-600">Large Area = <span class="text-blue-600 font-bold text-lg">LOW Pressure</span></p>
+                    </div>
+                </div>
+                <div class="text-center mt-4 bg-indigo-50 p-3 rounded font-mono text-indigo-800">
+                    Pressure = Force ÷ Area
+                </div>
+            </div>
+
+            <!-- Electricity -->
+            <div class="bg-white rounded-xl shadow p-6 mb-8 border-t-4 border-yellow-500">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">💡 Electricity Explorer</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Definitions -->
+                    <div class="space-y-4">
+                        <div class="p-3 bg-yellow-50 rounded border border-yellow-200">
+                            <strong>Current (Amps):</strong> Rate of flow of electrons.
+                        </div>
+                        <div class="p-3 bg-red-50 rounded border border-red-200">
+                            <strong>Resistance (Ohms):</strong> Opposes current.
+                            <br><span class="text-xs">More Resistance = Less Current (Squeezed pipe).</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-gray-100 p-2 rounded">
+                                <strong>Conductor:</strong> Allows flow (Metals).
+                            </div>
+                            <div class="bg-gray-100 p-2 rounded">
+                                <strong>Insulator:</strong> Blocks flow (Plastic).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Circuits Interactive -->
+                    <div class="space-y-4">
+                        <div class="border-2 border-yellow-100 rounded-xl p-4 cursor-pointer hover:bg-yellow-50 hover:border-yellow-400 transition" onclick="toggleCircuitInfo('series')">
+                            <div class="flex justify-between items-center">
+                                <strong class="text-lg">Series Circuit 🔗</strong>
+                                <span class="text-2xl">💡🚫</span>
+                            </div>
+                            <div id="series-extra" class="hidden mt-2 pt-2 border-t text-sm text-gray-700">
+                                <ul class="list-disc list-inside">
+                                    <li>Single loop. One path.</li>
+                                    <li>Current is same everywhere.</li>
+                                    <li><strong>Disadvantage:</strong> One bulb breaks = All go out.</li>
+                                </ul>
+                            </div>
+                            <div class="text-center text-xs text-gray-400 mt-1">Click to reveal details</div>
+                        </div>
+
+                        <div class="border-2 border-yellow-100 rounded-xl p-4 cursor-pointer hover:bg-yellow-50 hover:border-yellow-400 transition" onclick="toggleCircuitInfo('parallel')">
+                            <div class="flex justify-between items-center">
+                                <strong class="text-lg">Parallel Circuit 🛤️</strong>
+                                <span class="text-2xl">💡✨</span>
+                            </div>
+                            <div id="parallel-extra" class="hidden mt-2 pt-2 border-t text-sm text-gray-700">
+                                <ul class="list-disc list-inside">
+                                    <li>Branches. Multiple paths.</li>
+                                    <li>Current splits.</li>
+                                    <li><strong>Advantage:</strong> One bulb breaks = Others stay on. (Houses).</li>
+                                </ul>
+                            </div>
+                            <div class="text-center text-xs text-gray-400 mt-1">Click to reveal details</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= FLASHCARDS SECTION ================= -->
+        <div id="flash-section" class="hidden fade-in">
+             <div class="bg-white shadow-sm rounded-xl p-6 mb-8 border-t-4 border-cga-gold text-center">
+                <h2 class="text-3xl font-extrabold text-cga-red mb-2 uppercase">⚡ Quick Fire Revision</h2>
+                <p class="text-gray-600">Test yourself! Click a card to flip it and reveal the answer.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="flashcards-container">
+                <!-- Flashcards injected via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-cga-gray text-white py-8 mt-auto text-center border-t-4 border-cga-gold">
+        <p class="font-extrabold text-lg brand-font tracking-wide">SCIENCE WITH <span class="text-cga-gold">MR GUEVARA</span></p>
+        <p class="text-gray-400 text-sm mt-2">Stage 2 Science Revision Tool</p>
+    </footer>
+
+    <script>
+        // --- DATA ---
+        const mrsGrenData = [
+            { letter: 'M', title: 'Movement', desc: 'Changing position. Animals move to find food.' },
+            { letter: 'R', title: 'Respiration', desc: 'Releasing energy from glucose in cells. NOT breathing.' },
+            { letter: 'S', title: 'Sensitivity', desc: 'Detecting/responding to stimuli.' },
+            { letter: 'C', title: 'Control', desc: 'Homeostasis (e.g., Body Temp).' },
+            { letter: 'G', title: 'Growth', desc: 'Permanent increase in size.' },
+            { letter: 'R', title: 'Reproduction', desc: 'Making offspring (Sexual/Asexual).' },
+            { letter: 'E', title: 'Excretion', desc: 'Removing metabolic waste (CO2, Urea). Not poo.' },
+            { letter: 'N', title: 'Nutrition', desc: 'Taking in food/nutrients.' }
+        ];
+
+        const flashcards = [
+            {q: "Life Process removing waste?", a: "Excretion (metabolic waste)"},
+            {q: "Part of plant cell keeping it rigid?", a: "Vacuole"},
+            {q: "Transports water in plants?", a: "Xylem (Dead tubes)"},
+            {q: "System with Heart & Vessels?", a: "Circulatory System"},
+            {q: "Separating Sand & Water?", a: "Filtration"},
+            {q: "Evaporation then Condensation?", a: "Distillation"},
+            {q: "Chromatography use?", a: "Separating colours (solubility)"},
+            {q: "Energy stored in food?", a: "Chemical Energy"},
+            {q: "Example of Fossil Fuel?", a: "Coal, Oil, or Gas"},
+            {q: "Renewable source using Sun?", a: "Solar Energy"},
+            {q: "Result of Sexual Reproduction?", a: "Variation"},
+            {q: "Connects Baby to Mother?", a: "Placenta"},
+            {q: "Hormone triggering Ovulation?", a: "LH (Luteinising Hormone)"},
+            {q: "pH less than 7?", a: "Acid (Turns litmus red)"},
+            {q: "Symbol for damaging skin?", a: "Corrosive"},
+            {q: "Formula for Weight?", a: "Weight = Mass × Gravity"},
+            {q: "Unit of Force?", a: "Newtons (N)"},
+            {q: "Skeleton protecting brain?", a: "Skull"},
+            {q: "Muscle pair for arm?", a: "Biceps & Triceps"},
+            {q: "One loop circuit?", a: "Series Circuit"},
+            {q: "If Resistance Increases...", a: "Current Decreases"},
+            {q: "Respiration Location?", a: "Mitochondria"},
+            {q: "Particles far apart & fast?", a: "Gas"},
+            {q: "Most common gas in air?", a: "Nitrogen (78%)"},
+            {q: "Force opposing motion?", a: "Friction"},
+            {q: "Inherited Characteristic?", a: "Eye Colour / Blood Group"},
+            {q: "Natural Selection?", a: "Survival of the Fittest"},
+            {q: "Adaptation Example?", a: "Cheetah's spots (Camouflage)"},
+            {q: "Compound Definition?", a: "Elements chemically joined"},
+            {q: "Properties of Metals?", a: "Shiny, Conductors, Malleable"}
+        ];
+
+        const detailedSystemData = {
+            respiratory: {
+                title: "Respiratory System",
+                content: `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="bg-white p-4 rounded-xl border shadow-sm">
+                            <strong class="text-lg text-indigo-800">Major Organs</strong>
+                            <ul class="list-disc list-inside text-sm text-gray-700 mt-2 space-y-1">
+                                <li><strong>Trachea:</strong> Windpipe with cartilage.</li>
+                                <li><strong>Bronchi:</strong> Branches to lungs.</li>
+                                <li><strong>Lungs/Alveoli:</strong> Gas exchange sacs.</li>
+                                <li><strong>Diaphragm:</strong> Muscle sheet.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200">
+                            <h4 class="font-bold text-indigo-900 mb-2">⚠️ Don't Confuse These!</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="bg-white p-3 rounded shadow-sm">
+                                    <strong class="block text-indigo-600 mb-1">Breathing</strong>
+                                    Physical movement of air.
+                                </div>
+                                <div class="bg-white p-3 rounded shadow-sm">
+                                    <strong class="block text-indigo-600 mb-1">Respiration</strong>
+                                    Chemical reaction releasing energy (Mitochondria).
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center font-mono text-xs bg-gray-800 text-white p-2 rounded">Glucose + Oxygen → CO₂ + Water + Energy</div>
+                    </div>`
+            },
+            circulatory: {
+                title: "Circulatory System",
+                content: `<div class="space-y-4 animate-fadeIn"><p class="text-gray-700">Transport network moving Oxygen & Nutrients.</p><div class="grid grid-cols-3 gap-2 text-center text-sm"><div class="bg-red-50 p-3 rounded border border-red-200"><strong>Heart</strong><br>Pump</div><div class="bg-red-50 p-3 rounded border border-red-200"><strong>Vessels</strong><br>Tubes</div><div class="bg-red-50 p-3 rounded border border-red-200"><strong>Blood</strong><br>Medium</div></div></div>`
+            },
+            skeletal: {
+                title: "Skeletal & Muscular",
+                content: `<div class="space-y-4 animate-fadeIn"><ul class="list-disc list-inside text-sm text-gray-700"><li><strong>Protection:</strong> Skull, Ribs.</li><li><strong>Support:</strong> Frame.</li><li><strong>Movement:</strong> Levers.</li></ul><div class="bg-orange-50 p-4 rounded border border-orange-200 text-center"><h4 class="font-bold text-orange-900 mb-2">Antagonistic Pairs</h4><div class="flex justify-center gap-4"><button onclick="document.getElementById('muscle-status').innerText='Biceps Contract | Triceps Relax'" class="px-3 py-1 bg-white border rounded hover:bg-orange-100">Flex 💪</button><button onclick="document.getElementById('muscle-status').innerText='Triceps Contract | Biceps Relax'" class="px-3 py-1 bg-white border rounded hover:bg-orange-100">Extend 👇</button></div><p id="muscle-status" class="mt-3 font-bold text-orange-700">Select an action</p></div></div>`
+            },
+            repro: {
+                title: "Reproduction",
+                content: `<div class="space-y-4 animate-fadeIn text-sm"><div class="bg-pink-50 p-3 rounded border border-pink-200"><strong>Placenta:</strong> Connects mom & baby. Exchanges food/oxygen. Keeps blood separate.</div><div class="bg-white p-3 rounded border"><strong>Hormones:</strong><ul class="list-disc list-inside mt-1"><li>Oestrogen: Repairs lining.</li><li>LH: Ovulation.</li><li>Progesterone: Maintains lining.</li></ul></div></div>`
+            }
+        };
+
+        const cellData = {
+            animal: [
+                { name: 'Nucleus', func: 'Controls cell & DNA', icon: '🧠' },
+                { name: 'Cytoplasm', func: 'Chemical reactions', icon: '💧' },
+                { name: 'Cell Membrane', func: 'Controls entry/exit', icon: '🛡️' },
+                { name: 'Mitochondria', func: 'Respiration (Energy)', icon: '⚡' }
+            ],
+            plant: [
+                { name: 'Nucleus', func: 'Controls cell & DNA', icon: '🧠' },
+                { name: 'Cytoplasm', func: 'Chemical reactions', icon: '💧' },
+                { name: 'Cell Membrane', func: 'Controls entry/exit', icon: '🛡️' },
+                { name: 'Mitochondria', func: 'Respiration (Energy)', icon: '⚡' },
+                { name: 'Cell Wall', func: 'Support (Cellulose)', icon: '🧱', special: true },
+                { name: 'Vacuole', func: 'Rigid & Sap', icon: '🧊', special: true },
+                { name: 'Chloroplasts', func: 'Photosynthesis', icon: '🍃', special: true }
+            ]
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initBio();
+            initChem();
+            initPhys();
+            initFlashcards();
+            switchTab('bio'); 
+            updateSystemDetail('respiratory');
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('hero-section').classList.add('hidden');
+            
+            ['bio', 'chem', 'phys', 'flash'].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                btn.classList.remove('tab-btn-active');
+            });
+
+            document.getElementById(`${tabId}-section`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('tab-btn-active');
+
+            if(tabId === 'chem' && window.airChartInstance) window.airChartInstance.resize();
+            if(tabId === 'phys' && window.weightChartInstance) window.weightChartInstance.resize();
+        }
+
+        // --- BIO ---
+        function initBio() {
+            const container = document.getElementById('mrs-gren-container');
+            container.innerHTML = mrsGrenData.map(item => `
+                <div class="interactive-card bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-b-4 border-b-cga-gold" onclick="this.querySelector('.desc').classList.toggle('hidden');">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl font-black text-cga-red">${item.letter}</span>
+                        <h4 class="font-bold text-gray-800">${item.title}</h4>
+                    </div>
+                    <p class="desc hidden text-sm text-gray-600 mt-3 border-t pt-2 animate-fadeIn">${item.desc}</p>
+                </div>
+            `).join('');
+            updateCellView('animal');
+        }
+
+        function updateCellView(type) {
+            const container = document.getElementById('cell-details');
+            const btnAnimal = document.getElementById('btn-animal');
+            const btnPlant = document.getElementById('btn-plant');
+
+            if (type === 'animal') {
+                btnAnimal.className = 'flex-1 py-2 bg-green-100 text-green-800 shadow-inner transition';
+                btnPlant.className = 'flex-1 py-2 bg-white text-gray-500 hover:bg-gray-50 transition';
+            } else {
+                btnPlant.className = 'flex-1 py-2 bg-green-100 text-green-800 shadow-inner transition';
+                btnAnimal.className = 'flex-1 py-2 bg-white text-gray-500 hover:bg-gray-50 transition';
+            }
+
+            container.innerHTML = cellData[type].map(part => `
+                <div class="flex items-center p-3 rounded-lg mb-2 ${part.special ? 'bg-green-50 border border-green-200' : 'bg-gray-50'} animate-fadeIn">
+                    <span class="text-2xl mr-3">${part.icon}</span>
+                    <div>
+                        <span class="font-bold text-gray-800 block">${part.name}</span>
+                        <span class="text-xs text-gray-600">${part.func}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSystemDetail(sysId) {
+            const data = detailedSystemData[sysId];
+            document.getElementById('system-detail-panel').innerHTML = `
+                <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">${data.title}</h3>
+                ${data.content}
+            `;
+            // Button Highlight logic
+            document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('bg-gray-100', 'border-cga-red'));
+            document.querySelector(`button[onclick="updateSystemDetail('${sysId}')"]`).classList.add('bg-gray-100', 'border-cga-red');
+        }
+
+        // --- CHEM ---
+        function initChem() {
+            const ctx = document.getElementById('airChart').getContext('2d');
+            window.airChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Nitrogen', 'Oxygen', 'Argon', 'CO2'],
+                    datasets: [{ data: [78, 21, 0.9, 0.1], backgroundColor: ['#3B82F6', '#EF4444', '#10B981', '#F59E0B'], borderWidth: 0 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'right' },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw}%` } } 
+                    } 
+                }
+            });
+
+            document.getElementById('ph-slider').addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                const warning = document.getElementById('corrosive-warning');
+                document.getElementById('ph-value').innerText = `pH ${val}`;
+                
+                let type='Neutral', color='#22c55e', ex='Pure Water', corr=false;
+                if(val < 7) { type='Acid'; color='#ef4444'; ex = val<=2 ? 'Stomach Acid' : 'Lemon Juice'; corr = val<=2; }
+                else if(val > 7) { type='Alkali'; color='#3b82f6'; ex = val>=12 ? 'Bleach' : 'Soap'; corr = val>=12; }
+                
+                document.getElementById('ph-type').innerText = type;
+                document.getElementById('ph-type').style.color = color;
+                document.getElementById('ph-example').innerText = `Example: ${ex}`;
+                warning.classList.toggle('hidden', !corr);
+            });
+        }
+
+        function toggleResource(id) {
+            const el = document.getElementById(`${id}-details`);
+            el.classList.toggle('hidden');
+            el.classList.add('fade-in');
+        }
+
+        // --- PHYS ---
+        function initPhys() {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            window.weightChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Earth', 'Moon'],
+                    datasets: [{ label: 'Weight (N)', data: [500, 80], backgroundColor: ['#3B82F6', '#9CA3AF'], borderRadius: 6 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false } } } }
+            });
+        }
+
+        function updateWeightChart() {
+            const mass = document.getElementById('mass-input').value;
+            if(!mass) return;
+            window.weightChartInstance.data.datasets[0].data = [(mass*10).toFixed(1), (mass*1.6).toFixed(1)];
+            window.weightChartInstance.update();
+        }
+
+        function toggleCircuitInfo(type) {
+            document.getElementById(`${type}-extra`).classList.toggle('hidden');
+        }
+
+        // --- FLASHCARDS ---
+        function initFlashcards() {
+            const container = document.getElementById('flashcards-container');
+            container.innerHTML = flashcards.map((card, index) => `
+                <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front shadow-sm">
+                            <h4 class="text-xl font-bold text-gray-900">${card.q}</h4>
+                            <span class="absolute bottom-2 text-xs text-cga-gold font-bold">FLIP TO REVEAL ⚡</span>
+                        </div>
+                        <div class="flashcard-back shadow-lg">
+                            <p class="text-lg font-bold">${card.a}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
